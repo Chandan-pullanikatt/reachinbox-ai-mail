@@ -9,6 +9,7 @@ const redisConfig = process.env.REDIS_URL
         port: parseInt(new URL(process.env.REDIS_URL).port || '6379'),
         password: new URL(process.env.REDIS_URL).password,
         username: new URL(process.env.REDIS_URL).username,
+        family: 4,
         maxRetriesPerRequest: null,
     } // Minimal parsing for IORedis/BullMQ compatibility using connection string usually works better directly, 
     // but breaking it down ensures standard IORedis behavior, OR we can pass url string directly to constructor.
@@ -20,7 +21,7 @@ const redisConfig = process.env.REDIS_URL
 
 // If REDIS_URL is present, pass it directly string to IORedis constructor for best compatibility
 export const connection = process.env.REDIS_URL
-    ? new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null })
+    ? new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null, family: 4 })
     : new IORedis(redisConfig);
 
 export default connection;
