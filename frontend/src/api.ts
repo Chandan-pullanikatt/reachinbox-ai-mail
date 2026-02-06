@@ -36,4 +36,6 @@ export const scheduleEmail = (data: any) => api.post('/schedule', data);
 export const getEmails = (senderId: string) => api.get(`/emails?senderId=${senderId}`);
 export const getStats = (senderId: string) => api.get(`/stats?senderId=${senderId}`);
 
+export const toggleStar = (id: string, isStarred: boolean) => api.patch(`/emails/${id}/star`, { isStarred });
+
 export default api;

@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { scheduleEmails, getEmails, getStats } from '../controllers/emailController';
+import * as emailController from '../controllers/emailController';
 
 const router = Router();
 
-router.post('/schedule', scheduleEmails);
-router.get('/emails', getEmails);
-router.get('/stats', getStats);
+router.post('/schedule', emailController.scheduleEmails);
+router.get('/emails', emailController.getEmails);
+router.get('/stats', emailController.getStats);
+router.patch('/emails/:id/star', emailController.toggleStar);
 
 export default router;

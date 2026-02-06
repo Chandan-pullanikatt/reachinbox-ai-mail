@@ -122,3 +122,20 @@ export const getStats = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Server Error' });
     }
 };
+
+export const toggleStar = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { isStarred } = req.body;
+
+        const email = await prisma.scheduledEmail.update({
+            where: { id },
+            data: { isStarred }
+        });
+
+        res.json(email);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server Error' });
+    }
+};

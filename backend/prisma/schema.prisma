@@ -18,6 +18,7 @@ model ScheduledEmail {
   failedAt    DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  isStarred   Boolean  @default(false)
   senderId    String   // The user who scheduled it
   messageId   String?  // SMTP Message ID
   error       String?
