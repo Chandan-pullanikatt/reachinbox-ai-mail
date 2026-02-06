@@ -1,14 +1,31 @@
 # Production-Grade Email Scheduling System
 
-A full-stack email scheduler built with Express, BullMQ, Redis, PostgreSQL, and React.
+A full-stack email scheduler built with Express, BullMQ, Redis, PostgreSQL, and React. Designed for reliability, persistence, and concurrency.
 
-## 🚀 Features
+## 🚀 Features Implemented
 
-- **Reliable Scheduling**: Uses BullMQ delayed jobs backed by Redis. No cron jobs are used.
-- **Persistence**: Jobs survive server restarts. All states are synced to Postgres.
-- **Rate Limiting**: Enforces configurable hourly limits per sender. Automatically reschedules excess emails to the next hour.
-- **Concurrency**: Configured worker concurrency for safe parallel execution.
-- **Modern UI**: React + Tailwind Dashboard with Google OAuth flow.
+### Backend
+- **Scheduler**: Uses BullMQ delayed jobs backed by Redis. Zero dependency on runtime memory or cron jobs.
+- **Persistence**: 
+    - **Database**: All email metadata (status, timestamp, sender) is synced to PostgreSQL.
+    - **Job Queue**: Redis persists job data, ensuring schedules survive server crashes/restarts.
+- **Rate Limiting**: Custom implementation using Redis counters. Enforces "Emails per Hour" limit per user.
+- **Concurrency**: Worker configured to process multiple emails in parallel (default: 5) for throughput.
+- **Spill-over Handling**: If rate limit is hit, emails are automatically rescheduled to the next available hour slot.
+- **Starring**: Ability to "star" important emails for quick access.
+
+### Frontend
+- **Authentication**: Google OAuth 2.0 integration for login.
+- **Dashboard**:
+    - **Stats**: Real-time counters for Pending, Sent, and Failed emails.
+    - **History Table**: paginated view of email history with status badges.
+- **Compose**:
+    - **Rich Inputs**: Subject, Body, Recipient list parsing.
+    - **Configuration**: UI controls for "Delay between emails" and "Hourly Limit".
+- **Search & Filter**: Real-time search by subject/recipient and filtering by status/starred.
+- **User Dropdown**: Profile management access.
+
+---
 
 ## 🛠 Tech Stack
 
@@ -18,59 +35,92 @@ A full-stack email scheduler built with Express, BullMQ, Redis, PostgreSQL, and 
 - **Frontend**: Vite, React, Tailwind CSS
 - **Email**: Nodemailer (Ethereal for dev)
 
+---
+
 ## 🏃 How to Run
 
 ### 1. Infrastructure
-Start Redis and Postgres using Docker:
+Start Redis and Postgres using Docker (or use cloud providers like Render/Upstash):
 ```bash
 docker-compose up -d
 ```
 
-### 2. Backend
+### 2. Backend Setup
+Create a `.env` file in `/backend`:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/scheduler_db"
+REDIS_HOST="localhost"
+REDIS_PORT="6379"
+# Optional: Use REDIS_URL for production (e.g. Upstash)
+# REDIS_URL="redis://..."
+```
+
+Run the backend:
 ```bash
 cd backend
 npm install
-npx prisma db push
+npx prisma db push   # Sync Schema
 npm run dev
 ```
-Server runs on port 3000.
+_Server runs on port 3000._
 
-### 3. Frontend
+**Ethereal Email Setup**: 
+The app automatically creates a test Ethereal account on startup if no credentials are provided. Check the server console logs for the Preview URL of sent emails.
+
+### 3. Frontend Setup
+Create a `.env` file in `/frontend`:
+```env
+VITE_API_URL="http://localhost:3000/api"
+VITE_GOOGLE_CLIENT_ID="your_google_client_id"
+```
+
+Run the frontend:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-UI runs on port 5173.
+_UI runs on port 5173._
 
-## 🧠 Core Architecture
+---
 
-### Scheduling
-When a user schedules an email:
-1.  The API calculates the exact `scheduledAt` time for each recipient (accounting for delays).
-2.  A record is created in Postgres with `PENDING` status.
-3.  A delayed job is added to the BullMQ wrapper (Redis).
-4.  BullMQ holds the job until the time arrives, even if the Node process restarts.
+## 🧠 Architecture Overview
 
-### Restart Persistence
-- **Jobs**: Stored in Redis (AOF/RDB persistence recommended for prod). If the worker crashes, BullMQ re-queues processing jobs or keeps delayed jobs waiting.
-- **State**: Postgres serves as the source of truth for UI (History/Stats).
+### 1. Scheduling Flow
+1.  **Request**: User submits an email with `Scheduled Time`, `Delay`, and `Hourly Limit`.
+2.  **Calculation**: Backend calculates the specific `sendTime` for each recipient (Start Time + (Index * Delay)).
+3.  **Storage**: 
+    - A `ScheduledEmail` record is created in Postgres (Status: `PENDING`).
+    - A Job is added to BullMQ with a `delay` parameter matching the target time.
+4.  **Wait**: The job sits idle in Redis until the delay expires.
 
-### Rate Limiting & Concurrency
-**Rate Limiting**:
-The system enforces a strict "Emails Per Hour" limit per sender using Redis counters (`rate:limit:senderId:hourTimestamp`).
-- Before sending, the worker checks the counter.
-- If the limit is hit, the job is **not dropped**. It is rescheduled to the **start of the next hour** using `job.moveToDelayed`.
-- This ensures high volume requests spill over logically into future slots.
+### 2. Persistence & Reliability
+- **Server Restart**: Since jobs are stored in Redis (outside Node process) and metadata in Postgres, restarting the backend **does not** lose any schedules. BullMQ will pick up where it left off immediately on boot.
+- **Crash Handling**: If a job fails during processing, it is retried 3 times (with exponential backoff) before being marked as `FAILED`.
 
-**Concurrency**:
-The worker is configured with `concurrency: 5` (adjustable in `emailWorker.ts`). This allows 5 emails to be processed in parallel while sticking to rate limits.
+### 3. Rate Limiting Logic
+We handle limits nicely so users don't lose emails:
+1.  Worker picks up a job.
+2.  Checks Redis key `rate:limit:{senderId}:{hourTimestamp}`.
+3.  **If Limit Exceeded**:
+    - Calculates the start of the **next hour**.
+    - Puts the job back into the delayed queue for that time.
+    - Updates Postgres status to `RESCHEDULED`.
+4.  **If Allowed**:
+    - Increments counter.
+    - Sends email via Nodemailer.
+    - Updates Postgres status to `SENT`.
 
-**Min Delay**:
-The worker also checks `rate:last_sent:senderId` to ensure a minimum gap (e.g., 5s) between sends, preventing burst spam even if rate limits allow it.
+---
 
-### Trade-offs
-- **Precision**: BullMQ delayed jobs are accurate to within milliseconds usually, but heavy load might introduce slight processing delays.
-- **Ethereal Mail**: Used for demonstration. In prod, switch 'transporter' in `emailService.ts` to AWS SES or SendGrid.
-- **OAuth**: Frontend simulates Google login. For production, add a valid `GOOGLE_CLIENT_ID` in `App.tsx` and verify the token on the backend.
+## ⚠️ Trade-offs & Assumptions
+
+1.  **Authentication**:
+    - *Assumption*: We rely on frontend-side Google JWT decoding for the demo. In a strict production env, verify the JWT signature on the backend middleware.
+2.  **Timezones**:
+    - *Assumption*: All scheduling assumes the server time (UTC ideally). The frontend sends ISO date strings.
+3.  **Ethereal Email**:
+    - *Trade-off*: We use Ethereal (fake SMTP) to avoid spamming real addresses during dev/testing. It simulates network latency well.
+4.  **Deployment**:
+    - *Note*: Redis persistence configuration (RDB/AOF) is assumed to be managed by the cloud provider (e.g., Upstash) for production data safety.
 
