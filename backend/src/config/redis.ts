@@ -20,8 +20,13 @@ const redisConfig = process.env.REDIS_URL
     };
 
 // If REDIS_URL is present, pass it directly string to IORedis constructor for best compatibility
+// If REDIS_URL is present, pass it directly.
+// We disable TLS verification (rejectUnauthorized: false) to prevent handshake issues on some cloud environments.
 export const connection = process.env.REDIS_URL
-    ? new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null, family: 4 })
+    ? new IORedis(process.env.REDIS_URL, {
+        maxRetriesPerRequest: null,
+        tls: { rejectUnauthorized: false }
+    })
     : new IORedis(redisConfig);
 
 export default connection;
