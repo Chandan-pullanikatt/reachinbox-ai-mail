@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getStats, getCurrentUser } from '../api';
 import { Clock, Send, AlertTriangle } from 'lucide-react';
 

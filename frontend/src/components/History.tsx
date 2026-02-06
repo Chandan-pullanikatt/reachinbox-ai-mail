@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getEmails, getCurrentUser, toggleStar } from '../api';
-import { Star, Filter, RefreshCw, Search, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Star, Filter, RefreshCw, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { clsx } from 'clsx';
 

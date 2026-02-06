@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export const Compose = ({ onSuccess, onClose }: { onSuccess: () => void; onClose: () => void }) => {
-    const { register, handleSubmit, reset, watch, setValue } = useForm();
+    const { register, handleSubmit, reset } = useForm();
     const [loading, setLoading] = useState(false);
     const [parsedRecipients, setParsedRecipients] = useState<string[]>([]);
     const [manualRecipientInput, setManualRecipientInput] = useState('');

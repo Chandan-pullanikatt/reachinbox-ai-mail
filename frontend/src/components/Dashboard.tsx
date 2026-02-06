@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Compose } from './Compose';
 import { History } from './History';
 import { LogOut, User, Send, Clock, Edit3, ChevronDown, Mail } from 'lucide-react';
