@@ -36,9 +36,10 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         <div className="flex h-screen bg-white font-sans text-gray-900">
             {/* Sidebar */}
             <aside className="w-64 border-r border-gray-100 flex flex-col">
-                {/* Logo */}
-                <div className="h-16 flex items-center px-6 border-b border-gray-100">
-                    <span className="font-bold text-2xl tracking-tighter">OMG</span>
+                <div className="h-16 flex items-center justify-center px-6 border-b border-gray-100">
+                    <div className="w-8 h-8 flex items-center justify-center bg-black rounded">
+                        <span className="text-white font-bold text-lg">M</span>
+                    </div>
                 </div>
 
                 {/* User Dropdown */}
