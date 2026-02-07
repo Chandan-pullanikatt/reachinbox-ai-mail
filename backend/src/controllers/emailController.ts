@@ -112,9 +112,24 @@ export const getStats = async (req: Request, res: Response) => {
         if (!senderId) return res.status(400).json({ error: 'Sender ID required' });
 
         const [pending, sent, failed] = await Promise.all([
-            prisma.scheduledEmail.count({ where: { senderId: String(senderId), status: 'PENDING' } }),
-            prisma.scheduledEmail.count({ where: { senderId: String(senderId), status: 'SENT' } }),
-            prisma.scheduledEmail.count({ where: { senderId: String(senderId), status: 'FAILED' } }),
+            prisma.scheduledEmail.count({
+                where: {
+                    senderId: String(senderId),
+                    status: { in: ['PENDING', 'RESCHEDULED', 'Processing'] }
+                }
+            }),
+            prisma.scheduledEmail.count({
+                where: {
+                    senderId: String(senderId),
+                    status: { in: ['SENT', 'COMPLETED'] }
+                }
+            }),
+            prisma.scheduledEmail.count({
+                where: {
+                    senderId: String(senderId),
+                    status: 'FAILED'
+                }
+            }),
         ]);
 
         res.json({ pending, sent, failed });
