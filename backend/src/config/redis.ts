@@ -1,7 +1,9 @@
 import IORedis from 'ioredis';
 import dotenv from 'dotenv';
-
 dotenv.config();
+
+// Debug logs
+console.log("Initializing Redis...");
 
 const redisConfig = process.env.REDIS_URL
     ? {
@@ -28,5 +30,13 @@ export const connection = process.env.REDIS_URL
         tls: { rejectUnauthorized: false }
     })
     : new IORedis(redisConfig);
+
+connection.on('error', (err) => {
+    console.error('Redis Connection Error:', err);
+});
+
+connection.on('connect', () => {
+    console.log('Redis Connected!');
+});
 
 export default connection;
