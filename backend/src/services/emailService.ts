@@ -37,18 +37,27 @@ export const sendEmail = async ({
     subject: string;
     html: string;
 }) => {
-    const trans = await getTransporter();
+    try {
+        console.log(`[MOCK EMAIL SERVICE] Attempting to send email to ${to}...`);
 
-    const info = await trans.sendMail({
-        from: '"Email Scheduler" <scheduler@example.com>', // sender address
-        to, // list of receivers
-        subject, // Subject line
-        text: html.replace(/<[^>]*>?/gm, ''), // plain text body
-        html, // html body
-    });
+        // Simulating network delay
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-    console.log("Message sent: %s", info.messageId);
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+        // In a real production app with paid servers, this would use AWS SES / SendGrid.
+        // For this demo on Render Free Tier (which blocks SMTP ports 25/465/587),
+        // we log the email content to prove the scheduler triggered correctly.
 
-    return info;
+        console.log("==================================================");
+        console.log(`EMAIL SENT SUCCESSFULLY (Simulated)`);
+        console.log(`To: ${to}`);
+        console.log(`Subject: ${subject}`);
+        console.log(`Body: ${html.substring(0, 50)}...`);
+        console.log("==================================================");
+
+        return { messageId: `mock-${Date.now()}` };
+
+    } catch (error) {
+        console.error("Critical Email Error:", error);
+        throw error;
+    }
 };
