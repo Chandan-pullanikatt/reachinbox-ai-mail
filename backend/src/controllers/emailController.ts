@@ -115,7 +115,7 @@ export const getStats = async (req: Request, res: Response) => {
             prisma.scheduledEmail.count({
                 where: {
                     senderId: String(senderId),
-                    status: { in: ['PENDING', 'RESCHEDULED', 'Processing'] }
+                    status: { in: ['PENDING', 'RESCHEDULED', 'PROCESSING'] }
                 }
             }),
             prisma.scheduledEmail.count({

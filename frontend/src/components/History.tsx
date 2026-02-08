@@ -55,7 +55,7 @@ export const History = ({ refreshTrigger, filter }: { refreshTrigger: number, fi
         if (!matchesSearch) return false;
 
         if (starredFilter) return e.isStarred;
-        if (filter === 'PENDING') return e.status === 'PENDING' || e.status === 'Processing' || e.status === 'RESCHEDULED';
+        if (filter === 'PENDING') return e.status === 'PENDING' || e.status === 'PROCESSING' || e.status === 'RESCHEDULED';
         if (filter === 'SENT') return e.status === 'SENT' || e.status === 'FAILED';
         return true;
     });
