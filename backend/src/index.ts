@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import apiRoutes from './routes/api';
+console.log('Starting Email Worker...');
 import './worker/emailWorker'; // Start worker logic
 
 dotenv.config();

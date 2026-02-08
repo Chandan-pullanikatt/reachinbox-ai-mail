@@ -124,12 +124,9 @@ export const emailWorker = new Worker<EmailJobData>(
     },
     {
         connection,
-        concurrency: 5, // Configurable concurrency
-        limiter: {
-            max: 10, // Also BullMQ has built-in limiter, but we implemented custom for "Next Hour" requirement.
-            duration: 1000
-        } // We use our custom logic, but this limiter helps burst control.
-        // Actually remove BullMQ limiter to rely fully on our custom logic which handles "Next Hour" reschedule.
-        // The BullMQ limiter just delays within queue, doesn't reschedule to far future easily.
+        concurrency: 5,
+        // We handle rate limiting manually for 'Next Hour' logic.
+        // BullMQ's built-in limiter is for simple token bucket.
+        // We remove it to avoid conflicts.
     }
 );
