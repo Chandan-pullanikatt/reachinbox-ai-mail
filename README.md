@@ -123,4 +123,7 @@ We handle limits nicely so users don't lose emails:
     - *Trade-off*: We use Ethereal (fake SMTP) to avoid spamming real addresses during dev/testing. It simulates network latency well.
 4.  **Deployment**:
     - *Note*: Redis persistence configuration (RDB/AOF) is assumed to be managed by the cloud provider (e.g., Upstash) for production data safety.
+5.  **Production SMTP Limitation**:
+    - *Note*: The deployed version on Render Free Tier uses a **Mock Strategy** for the final email send step. This is because Render blocks outbound SMTP ports (587/465) by default.
+    - The entire scheduling, queueing, and rate-limiting logic works exactly as intended, but the final `sendMail` call is simulated to ensure the demo functions correctly without timing out. Logs are printed to the console to verify delivery.
 
